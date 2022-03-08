@@ -90,7 +90,7 @@ public:
         storage->Start();
 
         // TODO: configure network service
-        const uint16_t port = 8080;
+        const uint16_t port = 8888;
         log->warn("Start network on {}", port);
         server->Start(port, 2, 2);
     }

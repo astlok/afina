@@ -3,6 +3,9 @@
 
 #include <atomic>
 #include <thread>
+#include <set>
+#include <mutex>
+#include <condition_variable>
 
 #include <afina/network/Server.h>
 
@@ -20,7 +23,13 @@ namespace MTblocking {
  */
 class ServerImpl : public Server {
 public:
-    ServerImpl(std::shared_ptr<Afina::Storage> ps, std::shared_ptr<Logging::Service> pl);
+    ServerImpl(
+        std::shared_ptr<Afina::Storage> ps, 
+        std::shared_ptr<Logging::Service> pl, 
+        int max_threads = std::thread::hardware_concurrency(), 
+        long limeout = 5
+    );
+
     ~ServerImpl();
 
     // See Server.h
@@ -50,8 +59,22 @@ private:
     // Server socket to accept connections on
     int _server_socket;
 
+    long _timeout;
     // Thread to run network on
     std::thread _thread;
+
+    std::set<int> _client_sockets;
+    std::mutex _sockets_mu;
+
+    int _max_num_threads;
+
+    std::atomic<size_t> _cur_num_threads;
+
+    void process_connection(int client_socket) noexcept;
+
+    std::condition_variable _cv;
+    std::mutex _stop_mu;
+
 };
 
 } // namespace MTblocking
